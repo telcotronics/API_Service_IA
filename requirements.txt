@@ -1,0 +1,14 @@
+openai-whisper~=20240930
+fastapi~=0.115.11
+gradio~=5.25.0
+numpy~=2.2.4
+rembg~=2.0.65
+pillow~=11.2.1
+whisper~=1.1.10
+pytesseract~=0.3.13
+opencv-python~=4.11.0.86
+starlette~=0.46.2
+pandas~=2.2.3
+fitz~=0.0.1.dev2
+docx~=0.2.4
+tabula~=1.0.5

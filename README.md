@@ -1,4 +1,6 @@
-# AUDIO A TEXTO IA 
+# API DE SERVICIOS con Inteligencia Artificial
+
+## AUDIO A TEXTO IA 
 uso: el antiguo audio_aTexto_whisperAPI
 
 ### Para instalr WHISPER
@@ -16,25 +18,25 @@ Para actualizar el paquete a la última versión de este repositorio, ejecuta:
 pip install --upgrade --no-deps --force-reinstall git+https://github.com/openai/whisper.git
 También requiere que la herramienta de línea de comandos ffmpeg esté instalada en tu sistema, disponible en la mayoría de los gestores de paquetes.
 
-# on Ubuntu or Debian
+### on Ubuntu or Debian
 sudo apt update && sudo apt install ffmpeg
 
-# on Arch Linux
+### on Arch Linux
 sudo pacman -S ffmpeg
 
-# on MacOS using Homebrew (https://brew.sh/)
+### on MacOS using Homebrew (https://brew.sh/)
 brew install ffmpeg
 
-# on Windows using Chocolatey (https://chocolatey.org/)
+### on Windows using Chocolatey (https://chocolatey.org/)
 choco install ffmpeg
 
-# on Windows using Scoop (https://scoop.sh/)
+### on Windows using Scoop (https://scoop.sh/)
 scoop install ffmpeg
 Es posible que también necesites instalar Rust, en caso de que TikTok no proporcione una rueda precompilada para tu plataforma. Si ves errores de instalación durante el comando pip install mencionado anteriormente, sigue la página de inicio para instalar el entorno de desarrollo de Rust. Además, puede que necesites configurar la variable de entorno PATH, por ejemplo, export PATH="$HOME/.cargo/bin:$PATH". Si la instalación falla y no aparece el módulo "setuptools_rust", debes instalarlo, por ejemplo, ejecutando:
 pip install setuptools-rust
 Available models and languages
 
-# OBJETIVO IMPORTATNTES
+## OBJETIVO IMPORTATNTES
 instalar python
 ```bash
 sudo apt install python3
