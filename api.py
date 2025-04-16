@@ -26,18 +26,29 @@ from Class_consulta_apikey import ApiKeyManager
 from Class_ocr import OCRProcessor
 from Class_pdfConverter import PDFConverter
 
-#from dotenv import dotenv_values
-#config = dotenv_values(".env")
-#model = whisper.load_model("small")
 
-# Configuración de la base de datos
+import os
+from dotenv import load_dotenv
+# Cargar variables desde el archivo .env
+load_dotenv()
+# Configuración de la base de datos desde variables de entorno
 DB_CONFIG = {
-    "host": "192.168.10.150",
-    "user": "admin",
-    "password": "Dx.1706%",
-    "database": "webControl",
+    "host": os.getenv("DB_HOST", "localhost"),
+    "user": os.getenv("DB_USER", ""),
+    "password": os.getenv("DB_PASSWORD", ""),
+    "database": os.getenv("DB_DATABASE", ""),
+    "port": int(os.getenv("DB_PORT", "3306")),
     "auth_plugin":"mysql_native_password"
 }
+# Función para verificar si la configuración es válida
+def validate_db_config():
+    required_keys = ["host", "user", "password", "database"]
+    missing_keys = [key for key in required_keys if not DB_CONFIG.get(key)]
+    if missing_keys:
+        raise ValueError(f"Faltan configuraciones de base de datos: {', '.join(missing_keys)}")
+    return True
+
+
 # Creamos una instancia del gestor de API keys
 api_key_manager = ApiKeyManager(DB_CONFIG)
 # Definimos el esquema de seguridad para las API keys
