@@ -24,6 +24,7 @@ from starlette.responses import StreamingResponse, FileResponse
 from Class_audio_aTexto import Audio_aTexto
 from Class_consulta_apikey import ApiKeyManager
 from Class_ocr import OCRProcessor
+from Class_pdfConverter import PDFConverter
 
 #from dotenv import dotenv_values
 #config = dotenv_values(".env")
@@ -250,3 +251,112 @@ def obtener_idiomas():
             {"codigo": "ita", "nombre": "Italiano"}
         ]
     }
+
+
+@app.post("/convertir_pdf_aTexto/", response_class=JSONResponse)
+async def convertir_pdf_a_texto(file: UploadFile = File(...)):
+    # Leer el contenido del archivo
+    contents = await file.read()
+
+    # Guardar temporalmente el archivo PDF
+    temp_pdf_path = f"temp_{file.filename}"
+    with open(temp_pdf_path, "wb") as temp_file:
+        temp_file.write(contents)
+
+    try:
+        # Crear instancias de OCR y convertidor
+        ocr = OCRProcessor(idioma='spa')
+        converter = PDFConverter(ocr_processor=ocr)
+
+        # Convertir PDF a texto
+        texto = converter.pdf_to_text(temp_pdf_path, ocr_if_needed=True)
+
+        # Devolver el resultado como JSON
+        return {
+            "success": True,
+            "texto": texto,
+            "nombre_archivo": file.filename
+        }
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={"success": False, "error": f"Error al procesar el PDF: {str(e)}"}
+        )
+    finally:
+        # Limpiar archivo temporal
+        if os.path.exists(temp_pdf_path):
+            os.remove(temp_pdf_path)
+
+
+@app.post("/convertir_pdf_aWord/", response_class=JSONResponse)
+async def convertir_pdf_a_word(file: UploadFile = File(...)):
+    # Leer el contenido del archivo
+    contents = await file.read()
+
+    # Guardar temporalmente el archivo PDF
+    temp_pdf_path = f"temp_{file.filename}"
+    output_docx_path = f"output_{file.filename.replace('.pdf', '.docx')}"
+
+    with open(temp_pdf_path, "wb") as temp_file:
+        temp_file.write(contents)
+
+    try:
+        ocr = OCRProcessor(idioma='spa')
+        converter = PDFConverter(ocr_processor=ocr)
+
+        # Convertir PDF a Word
+        converter.pdf_to_docx(temp_pdf_path, output_docx_path, ocr_if_needed=True)
+
+        # Devolver el archivo Word como descarga
+        return FileResponse(
+            path=output_docx_path,
+            filename=file.filename.replace('.pdf', '.docx'),
+            media_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        )
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={"success": False, "error": f"Error al procesar el PDF: {str(e)}"}
+        )
+    finally:
+        # Limpiar archivos temporales
+        if os.path.exists(temp_pdf_path):
+            os.remove(temp_pdf_path)
+        # No elimines el output_docx_path aquí ya que se está devolviendo al cliente
+
+
+@app.post("/convertir_pdf_aExcel/", response_class=JSONResponse)
+async def convertir_pdf_a_excel(file: UploadFile = File(...)):
+    # Leer el contenido del archivo
+    contents = await file.read()
+
+    # Guardar temporalmente el archivo PDF
+    temp_pdf_path = f"temp_{file.filename}"
+    output_xls_path = f"output_{file.filename.replace('.pdf', '.xlsx')}"
+
+    with open(temp_pdf_path, "wb") as temp_file:
+        temp_file.write(contents)
+
+    try:
+        ocr = OCRProcessor(idioma='spa')
+        converter = PDFConverter(ocr_processor=ocr)
+
+        # Convertir PDF a Word
+        converter.pdf_to_excel(temp_pdf_path, output_xls_path,"tabula","all")
+
+        # Devolver el archivo Word como descarga
+        return FileResponse(
+            path=output_xls_path,
+            filename=file.filename.replace('.pdf', '.xlsx'),
+            media_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        )
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={"success": False, "error": f"Error al procesar el PDF: {str(e)}"}
+        )
+    finally:
+        # Limpiar archivos temporales
+        if os.path.exists(temp_pdf_path):
+            os.remove(temp_pdf_path)
+        # No elimines el output_docx_path aquí ya que se está devolviendo al cliente
