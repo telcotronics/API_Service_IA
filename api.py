@@ -1,10 +1,12 @@
 from http.client import HTTPException
 from typing import Union
-from fastapi import FastAPI, File, UploadFile, Form
+from fastapi import FastAPI, Depends, HTTPException, Security, status, File, UploadFile, Form
+from fastapi.security.api_key import APIKeyHeader, APIKey
 
 import tempfile
 import os
 
+from pyxnat.core.errors import catch_error
 #para usar en el removedor de fondos
 from rembg import remove
 from PIL import Image
@@ -20,12 +22,27 @@ from fastapi.middleware.cors import CORSMiddleware
 from starlette.responses import StreamingResponse, FileResponse
 
 from Class_audio_aTexto import Audio_aTexto
+from Class_consulta_apikey import ApiKeyManager
 from Class_ocr import OCRProcessor
 
 #from dotenv import dotenv_values
 #config = dotenv_values(".env")
 #model = whisper.load_model("small")
 
+# Configuración de la base de datos
+DB_CONFIG = {
+    "host": "192.168.10.150",
+    "user": "admin",
+    "password": "Dx.1706%",
+    "database": "webControl",
+    "auth_plugin":"mysql_native_password"
+}
+# Creamos una instancia del gestor de API keys
+api_key_manager = ApiKeyManager(DB_CONFIG)
+# Definimos el esquema de seguridad para las API keys
+api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
+
+# Definimos nuestra aplicación FastAPI
 app = FastAPI(title="API de IA", description="API para extraer DATOS de imágenes,audio,PDFs")
 
 # Configurar CORS para permitir solicitudes desde el frontend
@@ -37,22 +54,49 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.get("/")
-async def read_root():
-    return {"Hello": "World"}
+# Función para verificar la API key
+async def get_api_key(api_key_header: str = Security(api_key_header)):
+    if not api_key_header:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="API Key no proporcionada"
+        )
+    # Verificamos la API key usando nuestro gestor
+    api_key_info = api_key_manager.verify_api_key(api_key_header)
+    if not api_key_info:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="API Key inválida o expirada"
+        )
+    return api_key_info
 
-@app.get("/items/{item_id}")
-def read_item(item_id: int, q: Union[str, None] = None):
-    return {"item_id": item_id, "q": q}
+# Verificación adicional para endpoints de administración
+async def get_admin_api_key(api_key_info: dict = Depends(get_api_key)):
+    if not api_key_info.get("is_admin"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Se requieren privilegios de administrador"
+        )
+    return api_key_info
 
 
-@app.post("/audio_aTexto")
-async def prueba(upload_file: UploadFile = File):
+
+@app.get("/items/", tags=["Items"])
+async def read_items(api_key_info: dict = Depends(get_api_key)):
+    return {
+        "message": "Has accedido correctamente a un endpoint protegido",
+        "user_id": api_key_info.get("user_id"),
+        "key_name": api_key_info.get("key_name")
+    }
+
+
+@app.post("/audio_aTexto", tags=["Convertir Audio a texto"])
+async def prueba(upload_file: UploadFile = File, api_key_info: dict = Depends(get_api_key)):
     # return {"resp": audio_a_text(upload_file.read())}
     return {"resp": Audio_aTexto(upload_file.read())}
 
-@app.post("/convertir_audio_aTexto/")
-async def create_upload_file(upload_file: UploadFile = File(...)):
+@app.post("/convertir_audio_aTexto/", tags=["Convertir Audio a texto"])
+async def create_upload_file(upload_file: UploadFile = File(...), api_key_info: dict = Depends(get_api_key)):
     res = await upload_file.read()
     if not res:
         return {"message": "No upload file sent"}
@@ -68,22 +112,25 @@ async def create_upload_file(upload_file: UploadFile = File(...)):
         os.remove(temp_audio_path)  # Limpiar archivo temporal
     return {"filename": upload_file.filename, "size": len(res), "respuesta": response}
 
-@app.post("/removerFondo_img/")
-async def quitar_fondo(file: UploadFile = File(...)):
-    # Leer el archivo de imagen
-    input_image = await file.read()
-    # Usar rembg para eliminar el fondo
-    output_image = remove(input_image)
-    # Convertir a imagen PIL
-    image = Image.open(io.BytesIO(output_image)).convert("RGBA")
-    # Guardar imagen en memoria
-    img_bytes = io.BytesIO()
-    image.save(img_bytes, format="PNG")
-    img_bytes.seek(0)
-    return StreamingResponse(img_bytes, media_type="image/png")
+@app.post("/removerFondo_img/", tags=["Remover Fondo de una Imagen"])
+async def quitar_fondo(file: UploadFile = File(...), api_key_info: dict = Depends(get_api_key)):
+    try:
+        # Leer el archivo de imagen
+        input_image = await file.read()
+        # Usar rembg para eliminar el fondo
+        output_image = remove(input_image)
+        # Convertir a imagen PIL
+        image = Image.open(io.BytesIO(output_image)).convert("RGBA")
+        # Guardar imagen en memoria
+        img_bytes = io.BytesIO()
+        image.save(img_bytes, format="PNG")
+        img_bytes.seek(0)
+        return StreamingResponse(img_bytes, media_type="image/png")
+    except Exception as e:
+        return  {"Error": "error al procesar imagen", "respuesta": "Formato desconocido"}
 
-@app.post("/convertir_img_aTexto/", response_class=JSONResponse)
-async def convertir_img_a_texto(file: UploadFile = File(...)):
+@app.post("/convertir_img_aTexto/", response_class=JSONResponse, tags=["Convertir Imagen a texto"])
+async def convertir_img_a_texto(file: UploadFile = File(...), api_key_info: dict = Depends(get_api_key)):
     # Obtener contenido del archivo y convertirlo a un array de numpy
     contents = await file.read()
     nparr = np.frombuffer(contents, np.uint8)
@@ -102,11 +149,12 @@ async def convertir_img_a_texto(file: UploadFile = File(...)):
         "nombre_archivo": file.filename
     }
 
-@app.post("/ocr/", response_class=JSONResponse)
+@app.post("/ocr/", response_class=JSONResponse, tags=["Convertir Imagen a texto"])
 async def realizar_ocr(
         imagen: UploadFile = File(...),
         idioma: str = Form("spa"),
         nivel_preprocesamiento: int = Form(1)
+        , api_key_info: dict = Depends(get_api_key)
 ):
     """
     Extrae texto de una imagen usando OCR

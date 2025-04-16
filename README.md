@@ -4,8 +4,9 @@
 uso: el antiguo audio_aTexto_whisperAPI
 
 ### Para instalr WHISPER
+```bash
 pip install -U openai-whisper
-
+```
 Setup
 WUsamos Python 3.9.9 y PyTorch 1.10.1 para entrenar y probar nuestros modelos, pero se espera que el código base sea compatible con Python 3.8-3.11 y versiones recientes de PyTorch. El código base también depende de algunos paquetes de Python, en particular de tiktoken de OpenAI para la rápida implementación del tokenizador. Puedes descargar e instalar (o actualizar) la última versión de Whisper con el siguiente comando:
 
@@ -45,6 +46,11 @@ instalar pip
 ```bash
 sudo apt install pip
 sudo apt install python3-pip
+```
+
+Para actualizar pip
+```bash
+pip install --upgrade pip
 ```
 instalamos venv
 ```bash

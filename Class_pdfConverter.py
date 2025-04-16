@@ -1,4 +1,4 @@
-
+import fitz
 import pandas as pd
 import docx
 import tabula

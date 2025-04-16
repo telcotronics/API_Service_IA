@@ -30,7 +30,7 @@ else
     tmux new-window -t $session:$term0 -n 'API-WHISPER'
 
     tmux send-keys -t $session:$term0 Enter
-    tmux send-keys -t $session:$term0 'npython3 -m venv api_env'
+    tmux send-keys -t $session:$term0 'python3 -m venv api_env'
     tmux send-keys -t $session:$term0 Enter
     tmux send-keys -t $session:$term0 'source api_env/bin/activate'
     tmux send-keys -t $session:$term0 Enter
