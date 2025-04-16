@@ -264,8 +264,8 @@ def obtener_idiomas():
     }
 
 
-@app.post("/convertir_pdf_aTexto/", response_class=JSONResponse)
-async def convertir_pdf_a_texto(file: UploadFile = File(...)):
+@app.post("/convertir_pdf_aTexto/", response_class=JSONResponse,tags=["Conversion de Archivos PDF's"])
+async def convertir_pdf_a_texto(file: UploadFile = File(...), api_key_info: dict = Depends(get_api_key)):
     # Leer el contenido del archivo
     contents = await file.read()
 
@@ -299,14 +299,14 @@ async def convertir_pdf_a_texto(file: UploadFile = File(...)):
             os.remove(temp_pdf_path)
 
 
-@app.post("/convertir_pdf_aWord/", response_class=JSONResponse)
-async def convertir_pdf_a_word(file: UploadFile = File(...)):
+@app.post("/convertir_pdf_aWord/", response_class=JSONResponse,tags=["Conversion de Archivos PDF's"])
+async def convertir_pdf_a_word(file: UploadFile = File(...), api_key_info: dict = Depends(get_api_key)):
     # Leer el contenido del archivo
     contents = await file.read()
 
     # Guardar temporalmente el archivo PDF
     temp_pdf_path = f"temp_{file.filename}"
-    output_docx_path = f"output_{file.filename.replace('.pdf', '.docx')}"
+    output_docx_path = "temp/" f"output_{file.filename.replace('.pdf', '.docx')}"
 
     with open(temp_pdf_path, "wb") as temp_file:
         temp_file.write(contents)
@@ -336,14 +336,14 @@ async def convertir_pdf_a_word(file: UploadFile = File(...)):
         # No elimines el output_docx_path aquí ya que se está devolviendo al cliente
 
 
-@app.post("/convertir_pdf_aExcel/", response_class=JSONResponse)
-async def convertir_pdf_a_excel(file: UploadFile = File(...)):
+@app.post("/convertir_pdf_aExcel/", response_class=JSONResponse,tags=["Conversion de Archivos PDF's"])
+async def convertir_pdf_a_excel(file: UploadFile = File(...), api_key_info: dict = Depends(get_api_key)):
     # Leer el contenido del archivo
     contents = await file.read()
 
     # Guardar temporalmente el archivo PDF
     temp_pdf_path = f"temp_{file.filename}"
-    output_xls_path = f"output_{file.filename.replace('.pdf', '.xlsx')}"
+    output_xls_path = "temp/" f"output_{file.filename.replace('.pdf', '.xlsx')}"
 
     with open(temp_pdf_path, "wb") as temp_file:
         temp_file.write(contents)
