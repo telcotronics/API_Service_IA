@@ -12,3 +12,4 @@ pandas~=2.2.3
 fitz~=0.0.1.dev2
 docx~=0.2.4
 tabula~=1.0.5
+pyxnat

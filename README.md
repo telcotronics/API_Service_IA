@@ -73,6 +73,12 @@ instalar tmux
 sudo apt install tmux -y
 ```
 
+## conexion bd mysql
+```bash
+pip install mysql.connector
+
+```
+
 ## Remover Fondos de imagenes
 Para remover fondos de imagens
 Instala 
