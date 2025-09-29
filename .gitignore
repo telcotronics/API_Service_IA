@@ -1,2 +1,7 @@
 .env
 temp/*
+# Ignorar la carpeta de la caché de Python
+__pycache__/
+
+# Ignorar la carpeta del entorno virtual
+venv/
