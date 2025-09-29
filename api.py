@@ -343,7 +343,7 @@ async def convertir_pdf_a_excel(file: UploadFile = File(...), api_key_info: dict
 
     # Guardar temporalmente el archivo PDF
     temp_pdf_path = f"temp_{file.filename}"
-    output_xls_path = "temp/" f"output_{file.filename.replace('.pdf', '.xlsx')}"
+    output_xls_path = "temp/"  f"output_{file.filename.replace('.pdf', '.xlsx')}"
 
     with open(temp_pdf_path, "wb") as temp_file:
         temp_file.write(contents)

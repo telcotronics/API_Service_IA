@@ -1,43 +1,51 @@
 #!/bin/bash
-session="servidor-API"
+# Define el nombre de la sesión de TMUX (debe ser el mismo que el otro script)
+session="api_session"
 VENV_DIR="venv"
-#EXEC_CMD="fastapi run api.py "
 
+echo "EJECUCIÓN API-WHISPER 'SI=s, NO=n'"
+read SiNoWhisper
+SiNoWhisper=$(echo "$SiNoWhisper" | tr '[:upper:]' '[:lower:]')
 
-echo "EJECUCIÓN INICIAL 'SI=S, NO=n'"
-read SiNo
+if [ "$SiNoWhisper" = "s" ]; then
+    echo "Iniciando Servicio API-WHISPER"
 
-SiNo=$(echo "$SiNo" | tr '[:upper:]' '[:lower:]')
+    # Verifica si la sesión de TMUX ya existe
+    tmux has-session -t $session 2>/dev/null
 
-# Verificar si el entorno virtual ya existe
-if [ ! -d "$VENV_DIR" ]; then
-    echo "Creando entorno virtual..."
-    python3 -m venv "$VENV_DIR"
-fi
+    if [ $? != 0 ]; then
+        # La sesión no existe, la creamos
+        echo "**** Creando nueva sesión TMUX: $session ****"
+        tmux new-session -d -s $session
+    else
+        # La sesión ya existe
+        echo "**** Usando sesión TMUX existente: $session ****"
+    fi
 
-# Activar el entorno virtual
-source "$VENV_DIR/bin/activate"
+    # Creamos una nueva ventana en la sesión
+    tmux new-window -t $session -n 'API-WHISPER'
 
-if [ "$SiNo" = "s" ]; then
-    echo "Instalando dependencias..."
-    pip install -r requirements.txt
-    exit 0
-else
-    echo "Iniciando Servicio WHISPER API"
-    echo "**** iniciado TMUX ****"
+    # Entrar al directorio del proyecto (si es necesario) y preparar el entorno virtual
+    tmux send-keys -t $session:'API-WHISPER' 'cd API-WHISPER' # Asegúrate de que este sea el nombre de la carpeta
+    tmux send-keys -t $session:'API-WHISPER' Enter
 
-    tmux new-session -d -s $session
-    tmux new-window -t $session:$term0 -n 'API-WHISPER'
+    # Verificar si el entorno virtual ya existe en el directorio de la API
+    tmux send-keys -t $session:'API-WHISPER' 'if [ ! -d "'"$VENV_DIR"'" ]; then echo "Creando entorno virtual..."; python3 -m venv "'"$VENV_DIR"'"; fi'
+    tmux send-keys -t $session:'API-WHISPER' Enter
 
-    tmux send-keys -t $session:$term0 Enter
-    tmux send-keys -t $session:$term0 'python3 -m venv api_env'
-    tmux send-keys -t $session:$term0 Enter
-    tmux send-keys -t $session:$term0 'source api_env/bin/activate'
-    tmux send-keys -t $session:$term0 Enter
-    tmux send-keys -t $session:$term0 'pip install whisper'
-    tmux send-keys -t $session:$term0 Enter
-    tmux send-keys -t $session:$term0 'pip install "fastapi[standard]"'
-    tmux send-keys -t $session:$term0 Enter
-    tmux send-keys -t $session:$term0 'fastapi run api.py'
-    tmux send-keys -t $session:$term0 Enter
+    # Activar el entorno virtual
+    tmux send-keys -t $session:'API-WHISPER' 'source '"$VENV_DIR"'/bin/activate'
+    tmux send-keys -t $session:'API-WHISPER' Enter
+
+    # Instalar dependencias si no existen (asumiendo un archivo requirements.txt)
+    tmux send-keys -t $session:'API-WHISPER' 'pip list -o > /dev/null || pip install -r requirements.txt'
+    tmux send-keys -t $session:'API-WHISPER' Enter
+
+    # Iniciar la API
+    tmux send-keys -t $session:'API-WHISPER' 'fastapi run api.py'
+    tmux send-keys -t $session:'API-WHISPER' Enter
+
+    echo "API-WHISPER se está ejecutando en la ventana 'API-WHISPER' de la sesión '$session'."
+    echo "Para adjuntarte a la sesión, usa: tmux attach -t $session"
+
 fi
